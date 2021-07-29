@@ -1,0 +1,15 @@
+{
+  "name": "volodymyr-horin-investment-pool",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:vhorin-4irelabs/volodymyr-horin-investment-pool.git",
+  "author": "Volodymyr Horin <v.horin@4irelabs.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/test-helpers": "^0.5.9",
+    "@truffle/hdwallet-provider": "^1.4.2",
+    "dotenv": "^10.0.0",
+    "solidity-coverage": "^0.7.16",
+    "truffle-plugin-verify": "^0.5.11"
+  }
+}
