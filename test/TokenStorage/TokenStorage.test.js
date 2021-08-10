@@ -1,4 +1,4 @@
-const { BN, expectRevert } = require('@openzeppelin/test-helpers');
+const { BN, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const ERC20Mock = artifacts.require('ERC20Mock');
@@ -50,6 +50,16 @@ contract('TokenStorage', function (accounts) {
       expect(await this.tokenStorage.getTokenBalance({ from: initialHolder })).to.be.bignumber.equal(initialSupply);
       expect(await this.token.balanceOf(initialHolder, { from: initialHolder })).to.be.bignumber.equal('0');
     });
+
+    it('emits a deposit token event', async function () {
+      await this.token.approve(this.tokenStorage.address, initialSupply, { from: initialHolder });
+      const { logs } = await this.tokenStorage.depositToken(initialSupply, { from: initialHolder });
+
+      expectEvent.inLogs(logs, 'DepositToken', {
+        from: initialHolder,
+        value: initialSupply,
+      });
+    });
   });
 
   describe('withdrawToken', function () {
@@ -69,6 +79,17 @@ contract('TokenStorage', function (accounts) {
       await this.tokenStorage.withdrawToken(initialSupply, { from: initialHolder });
       expect(await this.tokenStorage.getTokenBalance({ from: initialHolder })).to.be.bignumber.equal('0');
       expect(await this.token.balanceOf(initialHolder, { from: initialHolder })).to.be.bignumber.equal(initialSupply);
+    });
+
+    it('emits a withdraw token event', async function () {
+      await this.token.approve(this.tokenStorage.address, initialSupply, { from: initialHolder });
+      await this.tokenStorage.depositToken(initialSupply, { from: initialHolder });
+      const { logs } = await this.tokenStorage.withdrawToken(initialSupply, { from: initialHolder });
+
+      expectEvent.inLogs(logs, 'WithdrawToken', {
+        from: initialHolder,
+        value: initialSupply,
+      });
     });
   });
 
@@ -126,6 +147,21 @@ contract('TokenStorage', function (accounts) {
       expect(await web3.eth.getBalance(testAccount)).to.be.bignumber.equal(new BN(balanceBeforeDeposit).sub(new BN(ethToSend)));
       expect(await this.tokenStorage.getETHBalance({ from: testAccount })).to.be.bignumber.equal(ethToSend);
     });
+
+    it('emits a deposit ether event', async function () {
+      const ethToSend = '777';
+
+      const { logs } = await this.tokenStorage.depositETH({
+        from: testAccount,
+        value: ethToSend,
+        gasPrice: 0
+      });
+
+      expectEvent.inLogs(logs, 'DepositETH', {
+        from: testAccount,
+        value: ethToSend,
+      });
+    });
   });
 
   describe('withdrawETH', function () {
@@ -164,6 +200,25 @@ contract('TokenStorage', function (accounts) {
 
       expect(await web3.eth.getBalance(testAccount)).to.be.bignumber.equal(new BN(balanceBeforeWithdraw).add(new BN(ethToWithdraw)));
       expect(await this.tokenStorage.getETHBalance({ from: testAccount })).to.be.bignumber.equal(new BN(initEthBalance).sub(new BN(ethToWithdraw)));
+    });
+
+    it('emits a withdraw ether event', async function () {
+      const amount = '777';
+      await this.tokenStorage.depositETH({
+        from: testAccount,
+        value: amount,
+        gasPrice: 0
+      });
+
+      const { logs } = await this.tokenStorage.withdrawETH(amount, {
+        from: testAccount,
+        gasPrice: 0
+      });
+
+      expectEvent.inLogs(logs, 'WithdrawETH', {
+        from: testAccount,
+        value: amount,
+      });
     });
   });
 
