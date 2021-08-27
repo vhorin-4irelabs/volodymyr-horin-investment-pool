@@ -8,6 +8,6 @@ module.exports = {
     ownerAddress: process.env.OWNER_ADDRESS,
   },
   TokenStorage: {
-    admin: process.env.OWNER_ADDRESS,
+    ownerAddress: process.env.OWNER_ADDRESS,
   }
 };

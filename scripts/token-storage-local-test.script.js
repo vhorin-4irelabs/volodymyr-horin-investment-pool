@@ -3,6 +3,7 @@ require('dotenv').config();
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3 = require('web3');
 const tokenStorageConfig = require('../build/contracts/TokenStorage.json');
+const TokenStorageProxyConfig = require('../build/contracts/TokenStorageProxy.json');
 const erc20Config = require('../build/contracts/ERC20.json');
 
 // Token owner address + private key
@@ -16,12 +17,14 @@ const testAccountPrivateKey = '';
 // Contracts
 const erc20ContractAddress = '';
 const tokenStorageContractAddress = '';
+const tokenStorageProxyContractAddress = '';
 
 module.exports = async function() {
   const ownerWallet = new Web3(new HDWalletProvider(ownerAccountPrivateKey, `http://localhost:8545`));
   const testWallet = new Web3(new HDWalletProvider(testAccountPrivateKey, `http://localhost:8545`));
   const erc20Contract = new ownerWallet.eth.Contract(erc20Config.abi, erc20ContractAddress);
-  const tokenStorageContract = new ownerWallet.eth.Contract(tokenStorageConfig.abi, tokenStorageContractAddress);
+  const tokenStorageContract = new ownerWallet.eth.Contract(tokenStorageConfig.abi, tokenStorageProxyContractAddress);
+  const tokenStorageProxyContract = new ownerWallet.eth.Contract(TokenStorageProxyConfig.abi, tokenStorageProxyContractAddress);
   const oneToken = web3.utils.toWei('1');
 
   console.log('Sending 1.1 ETH to owner address...');
@@ -33,11 +36,20 @@ module.exports = async function() {
   });
   console.log(`1.1 ETH sent to owner ${ownerAccountAddress}`);
 
-  console.log('Approving 1 token for TokenStorage contract...');
-  await erc20Contract.methods.approve(tokenStorageContractAddress, oneToken).send({
+  console.log('Updating TokenStorageProxy implementation version...');
+  await tokenStorageProxyContract.methods.upgradeTo(tokenStorageContractAddress).send({
     from: ownerAccountAddress
   });
-  console.log(`1 token has been approved for TokenStorage (${tokenStorageContractAddress})`);
+  console.log(
+    'TokenStorageProxy version: ',
+    await tokenStorageProxyContract.methods.currentVersion().call({ from: ownerAccountAddress })
+  );
+
+  console.log('Approving 1 token for TokenStorageProxy contract...');
+  await erc20Contract.methods.approve(tokenStorageProxyContractAddress, oneToken).send({
+    from: ownerAccountAddress
+  });
+  console.log(`1 token has been approved for TokenStorageProxy (${tokenStorageProxyContractAddress})`);
 
   console.log('Depositing 1 token...');
   await tokenStorageContract.methods.depositToken(oneToken).send({
