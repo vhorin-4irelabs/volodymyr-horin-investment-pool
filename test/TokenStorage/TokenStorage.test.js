@@ -109,7 +109,7 @@ contract('TokenStorage', function (accounts) {
     it('when sender is not admin, reverts', async function () {
       await expectRevert(this.tokenStorage.updateTokenBalance(
         initialHolder, '1',
-        { from: testAccount }), 'Method allowed only for admin',
+        { from: testAccount }), 'Ownable: caller is not the owner.',
       );
       expect(await this.tokenStorage.getTokenBalance({ from: initialHolder })).to.be.bignumber.equal('0');
     });

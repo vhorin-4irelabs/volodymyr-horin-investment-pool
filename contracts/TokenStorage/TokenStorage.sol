@@ -2,13 +2,12 @@ pragma solidity ^0.8.0;
 
 import "../ERC20/IERC20.sol";
 import "../utils/SafeMath.sol";
+import "../utils/Ownable.sol";
 
-contract TokenStorage {
+contract TokenStorage is Ownable {
     using SafeMath for uint256;
 
     address public immutable _token;
-
-    address private _admin;
 
     mapping (address => uint256) private _ethBalances;
     mapping (address => uint256) private _tokenBalances;
@@ -19,9 +18,8 @@ contract TokenStorage {
     event DepositETH(address indexed from, uint256 value);
     event WithdrawETH(address indexed from, uint256 value);
 
-    constructor(address token, address admin) {
+    constructor(address token, address owner) Ownable(owner) {
         _token = token;
-        _admin = admin;
     }
 
     function depositToken(uint256 amount) public returns (bool) {
@@ -42,8 +40,7 @@ contract TokenStorage {
         return _tokenBalances[msg.sender];
     }
 
-    function updateTokenBalance(address target, uint256 balance) public returns (bool) {
-        require(msg.sender == _admin, "Method allowed only for admin");
+    function updateTokenBalance(address target, uint256 balance) public onlyOwner returns (bool) {
         _tokenBalances[target] = balance;
         return true;
     }
